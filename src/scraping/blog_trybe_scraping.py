@@ -1,7 +1,10 @@
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.common.exceptions import NoSuchElementException
+from sqlmodel import Session
+from src.data.sql_model import News, engine
 from time import sleep
+import json
 
 
 def scrape_links_news(browser):
@@ -29,13 +32,13 @@ def create_object_news(link_page, browser):
         )
 
     news["timestamp"] = timestamp_element.text
-    news["titleContents"] = browser.find_element(By.ID, "1").text
+    news["title_contents"] = browser.find_element(By.ID, "1").text
     contents = []
     for tag_p in browser.find_element(By.ID, "1").find_elements(
         By.XPATH, "./following-sibling::p[position() <= 3]"
     ):
         contents.append(tag_p.text)
-    news["contents"] = contents
+    news["contents"] = json.dumps(contents)
     news["category"] = browser.find_element(By.CLASS_NAME, "label").text
     return news
 
@@ -43,8 +46,9 @@ def create_object_news(link_page, browser):
 def scrape_news():
     browser = webdriver.Firefox()
     links = scrape_links_news(browser)
-    news = []
     for link_page in links:
-        news.append(create_object_news(link_page, browser))
+        news = News(**create_object_news(link_page, browser))
+        with Session(engine) as session:
+            session.add(news)
+            session.commit()
     browser.quit()
-    return news
