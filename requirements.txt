@@ -1,5 +1,4 @@
 black==22.3.0
 flake8==4.0.1
-requests==2.24.0
-pymongo==3.11.0
-selenium
+selenium==4.6.0
+sqlmodel
